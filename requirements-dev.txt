@@ -1,5 +1,6 @@
-## requirements-dev.txt: dependencies for testing.
+## requirements-dev.txt: dependencies for development.
 databricks-sdk
+Jinja2
 flake8
 pyspark
 pytest
