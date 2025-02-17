@@ -1,0 +1,99 @@
+name: Deploy to Production Databricks Workspace
+concurrency: 1
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy_stage:
+    name: "Deploy Bundle to Stage Environment"
+    runs-on: ubuntu-latest
+    environment: stage
+    env:
+      DATABRICKS_HOST: ${{ vars.DBX_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - name: Deploy bundle
+        run: databricks bundle deploy -t stage --auto-approve
+        working-directory: .
+
+  # run_stage:
+  #   name: "Run Staging Pipeline"
+  #   runs-on: ubuntu-latest
+  #   needs: deploy_stage
+  #   environment: stage
+  #   env:
+  #     DATABRICKS_HOST: ${{ vars.DBX_HOST }}
+  #     DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
+  #     DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: databricks/setup-cli@main
+  #     - name: Run Pipeline
+  #       run: databricks bundle run -t stage events_raw
+  #       working-directory: .
+
+  testing:
+    name: "Integration Testing"
+    runs-on: ubuntu-latest
+    needs: deploy_stage
+    environment: stage
+    env:
+      DATABRICKS_HOST: ${{ vars.DBX_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: cache
+        name: Cache Python build
+        with:
+          python-version: "3.x"
+          cache-dependency-path: "requirements-dev.txt"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Integration Testing
+        run: pytest tests/integration
+
+  deploy_prod:
+    name: "Deploy Bundle to Production Environment"
+    runs-on: ubuntu-latest
+    needs: testing
+    environment: prod
+    env:
+      DATABRICKS_HOST: ${{ vars.DBX_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - name: Deploy bundle
+        run: databricks bundle deploy -t prod --auto-approve
+        working-directory: .
+
+  # run_prod:
+  #   name: "Run Production Pipeline"
+  #   runs-on: ubuntu-latest
+  #   needs: deploy_prod
+  #   environment: prod
+  #   env:
+  #     DATABRICKS_HOST: ${{ vars.DBX_HOST }}
+  #     DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
+  #     DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: databricks/setup-cli@main
+  #     - name: Run Pipeline
+  #       run: databricks bundle run -t prod events_raw
+  #       working-directory: .

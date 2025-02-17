@@ -1,0 +1,54 @@
+# This is a simple Databricks asset bundle deployment
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: dbx-deployment_bundle
+
+# Importing resources. These are split into their own files for modularity
+include:
+  - resources/*.yml
+
+# This section defines the target deployment environments
+targets:
+  dev:
+    mode: development
+    run_as:
+      service_principal_name: { { dev_sp } }
+    permissions:
+      - level: CAN_MANAGE
+        service_principal_name: { { dev_sp } }
+      - level: CAN_VIEW
+        user_name: ${workspace.current_user.userName}
+    default: true
+    workspace:
+      host: { { dev_host } }
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+  stage:
+    mode: production
+    git:
+      branch: main
+    run_as:
+      service_principal_name: { { stage_sp } }
+    permissions:
+      - level: CAN_MANAGE
+        service_principal_name: { { stage_sp } }
+      - level: CAN_VIEW
+        user_name: ${workspace.current_user.userName}
+    workspace:
+      host: { { stage_host } }
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+  prod:
+    mode: production
+    git:
+      branch: main
+    run_as:
+      service_principal_name: { { prod_sp } }
+    permissions:
+      - level: CAN_MANAGE
+        service_principal_name: { { prod_sp } }
+      - level: CAN_VIEW
+        user_name: ${workspace.current_user.userName}
+    workspace:
+      host: { { prod_host } }
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}

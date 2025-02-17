@@ -1,0 +1,67 @@
+name: Test and Deploy to Dev Databricks Workspace
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  linting:
+    name: "Python Linting"
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      DATABRICKS_HOST: ${{ vars.DBX_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - uses: actions/setup-python@v5
+        id: cache
+        name: Cache Python build
+        with:
+          python-version: "3.x"
+          cache-dependency-path: "requirements-dev.txt"
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Unit Testing
+        run: pytest tests/unit
+      - name: Linting
+        run: flake8 src
+
+  deploy_bundle:
+    name: "Deploy Dev Bundle"
+    runs-on: ubuntu-latest
+    needs: linting
+    environment: dev
+    env:
+      DATABRICKS_HOST: ${{ vars.DBX_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - name: Deploy bundle
+        run: databricks bundle deploy -t dev --auto-approve
+        working-directory: .
+
+  run_pipeline:
+    name: "Run Dev Pipeline"
+    runs-on: ubuntu-latest
+    needs: deploy_bundle
+    environment: dev
+    env:
+      DATABRICKS_HOST: ${{ vars.DBX_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - name: Run Pipeline
+        run: databricks bundle run events_raw
+        working-directory: .
