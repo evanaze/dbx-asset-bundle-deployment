@@ -23,23 +23,6 @@ jobs:
         run: databricks bundle deploy -t stage --auto-approve
         working-directory: .
 
-  # run_stage:
-  #   name: "Run Staging Pipeline"
-  #   runs-on: ubuntu-latest
-  #   needs: deploy_stage
-  #   environment: stage
-  #   env:
-  #     DATABRICKS_HOST: ${{ vars.DBX_HOST }}
-  #     DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
-  #     DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: databricks/setup-cli@main
-  #     - name: Run Pipeline
-  #       run: databricks bundle run -t stage events_raw
-  #       working-directory: .
-
   testing:
     name: "Integration Testing"
     runs-on: ubuntu-latest
@@ -80,20 +63,3 @@ jobs:
       - name: Deploy bundle
         run: databricks bundle deploy -t prod --auto-approve
         working-directory: .
-
-  # run_prod:
-  #   name: "Run Production Pipeline"
-  #   runs-on: ubuntu-latest
-  #   needs: deploy_prod
-  #   environment: prod
-  #   env:
-  #     DATABRICKS_HOST: ${{ vars.DBX_HOST }}
-  #     DATABRICKS_CLIENT_ID: ${{ vars.DBX_SP_ID }}
-  #     DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_SP_SECRET }}
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: databricks/setup-cli@main
-  #     - name: Run Pipeline
-  #       run: databricks bundle run -t prod events_raw
-  #       working-directory: .
