@@ -7,7 +7,7 @@ See the associated blog post to this repo here: https://evanazevedo.com/blog/dat
 ### Asset Bundles
 
 This repo uses Databricks Asset Bundles to deploy and manage resources within Databricks.
-For documentation on the Databricks asset bundles format used for this project, and for CI/CD configuration, see:
+For documentation on the Databricks asset bundles format used for this project, see:
 
 - **High-level overview**: https://docs.databricks.com/dev-tools/bundles/index.html.
 - **Configuration reference**: https://docs.databricks.com/en/dev-tools/bundles/reference.html
